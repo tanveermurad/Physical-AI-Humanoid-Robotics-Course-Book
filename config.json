@@ -1,0 +1,30 @@
+{
+  "LOG": true,
+  "LOG_LEVEL": "info",
+  "HOST": "127.0.0.1",
+  "PORT": 3456,
+  "API_TIMEOUT_MS": 6000000,
+
+  "Providers": [
+    {
+      "name": "gemini",
+      "api_base_url": "https://generativelanguage.googleapis.com/v1beta", 
+      "api_key": "AIzaSyAKxzkJbBlOCIn_5oqftA204M0p8wRXmSc",
+      "models": [
+        "models/gemini-2.5-flash",
+        "models/gemini-2.0-flash"
+      ],
+      "transformer": {
+        "use": ["gemini"]
+      }
+    }
+  ],
+
+  "Router": {
+    "default": "gemini,models/gemini-2.5-flash",
+    "background": "gemini,models/gemini-2.5-flash",
+    "think": "gemini,models/gemini-2.5-flash",
+    "longContext": "gemini,models/gemini-2.5-flash",
+    "longContextThreshold": 600000
+  }
+}
