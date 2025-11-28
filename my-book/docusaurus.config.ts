@@ -25,6 +25,7 @@ const config: Config = {
   organizationName: 'tanveermurad', // Usually your GitHub org/user name.
   projectName: 'Physical-AI-Humanoid-Robotics-Course-Book', // Usually your repo name.
   deploymentBranch: 'gh-pages',
+  trailingSlash: false,
 
   onBrokenLinks: 'throw',
 

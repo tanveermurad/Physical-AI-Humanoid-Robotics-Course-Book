@@ -1,25 +1,11 @@
-yangshun:
-  name: Yangshun Tay
-  title: Ex-Meta Staff Engineer, Co-founder GreatFrontEnd
-  url: https://linkedin.com/in/yangshun
-  image_url: https://github.com/yangshun.png
+tanveer:
+  name: Muhammad Tanveer
+  title: Aspiring AI Agent Developer | Tech Learner
+  url: https://linkedin.com/in/muhammad-tanveer   # change if you want
+  image_url: https://github.com/tanveer.png       # supply real GitHub username if different
   page: true
   socials:
-    x: yangshunz
-    linkedin: yangshun
-    github: yangshun
-    newsletter: https://www.greatfrontend.com
-
-slorber:
-  name: Sébastien Lorber
-  title: Docusaurus maintainer
-  url: https://sebastienlorber.com
-  image_url: https://github.com/slorber.png
-  page:
-    # customize the url of the author page at /blog/authors/<permalink>
-    permalink: '/all-sebastien-lorber-articles'
-  socials:
-    x: sebastienlorber
-    linkedin: sebastienlorber
-    github: slorber
-    newsletter: https://thisweekinreact.com
+    x: tanveer_ai                                # replace with your actual handle
+    linkedin: muhammad-tanveer
+    github: tanveer                               # replace with real GitHub username
+    newsletter: https://tanveer-ai-newsletter.com # optional → change or remove

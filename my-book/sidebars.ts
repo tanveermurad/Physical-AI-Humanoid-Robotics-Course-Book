@@ -48,6 +48,11 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Part 4: Capstone Project',
+      items: ['part4-capstone-project/overview'],
+    },
+    {
+      type: 'category',
       label: 'Tutorial Basics',
       items: ['tutorial-basics/create-a-blog-post'],
     },
