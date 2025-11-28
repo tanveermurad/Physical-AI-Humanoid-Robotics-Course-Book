@@ -154,7 +154,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Physical AI & Humanoid Robotics. Built with Docusaurus.`,
+      copyright: `My Book Information.`,
     },
     prism: {
       theme: prismThemes.github,
