@@ -36,6 +36,16 @@ const config: Config = {
     locales: ['en'],
   },
 
+  stylesheets: [
+    {
+      href: 'https://cdn.jsdelivr.net/npm/katex@0.13.24/dist/katex.min.css',
+      type: 'text/css',
+      integrity:
+        'sha384-odtC+0BTd_VIRyD2IhJUr3BuVJHGb5A4UqpghpscqimF1/+bM2SXpyVGa7A+3S+4',
+      crossorigin: 'anonymous',
+    },
+  ],
+
   presets: [
     [
       'classic',
@@ -46,6 +56,8 @@ const config: Config = {
           // Remove this to remove the "edit this page" links.
           editUrl:
             'https://github.com/tanveermurad/Physical-AI-Humanoid-Robotics-Course-Book/tree/main/my-book/',
+          remarkPlugins: [require('remark-math')],
+          rehypePlugins: [require('rehype-katex')],
         },
         blog: {
           showReadingTime: true,
@@ -57,6 +69,8 @@ const config: Config = {
           // Remove this to remove the "edit this page" links.
           editUrl:
             'https://github.com/tanveermurad/Physical-AI-Humanoid-Robotics-Course-Book/tree/main/my-book/',
+          remarkPlugins: [require('remark-math')],
+          rehypePlugins: [require('rehype-katex')],
           // Useful options to enforce blogging best practices
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
