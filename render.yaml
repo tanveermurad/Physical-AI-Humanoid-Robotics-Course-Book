@@ -1,0 +1,44 @@
+services:
+  # Auth Server
+  - type: web
+    name: physical-ai-auth-server
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd auth-server && npm install --legacy-peer-deps
+    startCommand: cd auth-server && node index.js
+    envVars:
+      - key: BETTER_AUTH_SECRET
+        generateValue: true
+      - key: BETTER_AUTH_URL
+        sync: false
+      - key: FRONTEND_URL
+        value: https://tanveermurad.github.io
+      - key: PORT
+        value: 3001
+
+  # Chatbot API
+  - type: web
+    name: physical-ai-chatbot-api
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: cd rag_chatbot_api && pip install -r requirements.txt
+    startCommand: cd rag_chatbot_api && python main.py
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+      - key: COLLECTION_NAME
+        value: robotics_docs
+      - key: EMBEDDING_MODEL
+        value: text-embedding-3-small
+      - key: LLM_MODEL
+        value: gpt-4-turbo-preview
+      - key: PORT
+        value: 8000
