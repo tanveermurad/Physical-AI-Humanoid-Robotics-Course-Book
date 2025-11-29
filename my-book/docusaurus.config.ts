@@ -116,27 +116,5 @@ const config: Config = {
       darkTheme: prismThemes.dracula,
     },
   } satisfies Preset.ThemeConfig,
-  // Custom Webpack configuration to inject environment variables
-  // Docusaurus requires environment variables to be prefixed with DANGEROUSLY_ to be exposed to the client-side.
-  // We're defining FRONTEND_API_BASE_URL here, and it will be available as process.env.FRONTEND_API_BASE_URL
-  webpack: {
-    jsLoader: (isDev: boolean, get // @ts-expect-error: docusaurus internal
-    JsLoaderOptions: () => any) => {
-      return {
-        ...getJsLoaderOptions(),
-        // For development, we might want to inline source maps
-        // For production, we want to optimize for size
-        // This is a minimal example, adjust as needed.
-      };
-    },
-    // We can directly use configureWebpack for simpler additions
-    configureWebpack: (config: any) => {
-      config.plugins.push(
-        new (require('webpack').DefinePlugin)({
-          'process.env.FRONTEND_API_BASE_URL': JSON.stringify(process.env.FRONTEND_API_BASE_URL || 'http://localhost:8000'),
-        }),
-      );
-    },
-  },
 };
 export default config;

@@ -11,6 +11,7 @@ from models import ChatRequest, ChatResponse, IngestRequest, IngestResponse, Cha
 from rag_core import get_conversational_rag_chain, embed_and_store_documents, format_chat_history_for_langchain
 from qdrant_client_config import get_qdrant_client
 from database import init_db, get_db, ChatHistory
+from openai_agent import chat_with_agent, format_chat_history_for_agent
 
 load_dotenv()
 
@@ -65,41 +66,46 @@ async def embed_documents(
 @app.post("/chat", response_model=ChatResponse)
 async def chat(
     request: ChatRequest,
-    qdrant_client: QdrantClient = Depends(get_qdrant_client_dependency),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Answers a question using RAG, incorporating chat history for conversational context.
+    Answers a question using OpenAI Agents with Qdrant retrieval,
+    incorporating chat history and user personalization.
     """
     if not request.message:
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
 
     try:
-        rag_chain = get_conversational_rag_chain(qdrant_client)
+        # Generate session_id (use user_id if available, otherwise UUID)
+        session_id = request.user_id or str(uuid.uuid4())
 
-        # Generate a session_id if not provided (for new conversations)
-        # Use the session_id from the first message if available, otherwise create a new UUID
-        session_id = str(uuid.uuid4())
-        if request.chat_history and len(request.chat_history) > 0:
-            # Try to extract session_id from metadata if it exists, otherwise keep the UUID
-            session_id = getattr(request.chat_history[0], 'session_id', session_id)
+        # Format chat history for OpenAI agent
+        formatted_chat_history = format_chat_history_for_agent(request.chat_history or [])
 
-        # Langchain expects history as a list of (HumanMessage, AIMessage) tuples or objects
-        formatted_chat_history = format_chat_history_for_langchain(request.chat_history or [])
+        # Call OpenAI agent with personalization and selected text
+        result = await chat_with_agent(
+            message=request.message,
+            selected_text=request.selected_text,
+            user_profile=request.user_profile,
+            chat_history=formatted_chat_history
+        )
 
-        result = await rag_chain.ainvoke({
-            "input": request.message,
-            "chat_history": formatted_chat_history
-        })
-        
-        assistant_response = result["answer"]
-        source_documents = [doc.page_content for doc in result.get("context", [])]
+        assistant_response = result["response"]
+        source_documents = result["sources"]
+        tool_calls = result["tool_calls"]
 
-        # Store chat history in the database
+        # Store chat history in the database (Neon Postgres)
         new_chat_entry = ChatHistory(
             session_id=session_id,
+            user_id=request.user_id,
             user_message=request.message,
-            assistant_message=assistant_response
+            assistant_message=assistant_response,
+            selected_text=request.selected_text,
+            metadata={
+                "sources": source_documents,
+                "tool_calls": tool_calls,
+                "user_profile": request.user_profile
+            }
         )
         db.add(new_chat_entry)
         await db.commit()
@@ -116,7 +122,9 @@ async def chat(
             chat_history=updated_chat_history
         )
     except Exception as e:
-        print(f"Error during RAG chain invocation: {e}")
+        print(f"Error during chat: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"An error occurred while processing your request: {str(e)}")
 
 # --- Run the application (for development) ---

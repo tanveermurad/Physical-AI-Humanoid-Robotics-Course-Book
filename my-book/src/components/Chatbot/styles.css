@@ -177,3 +177,72 @@
 .source-documents-list li {
     margin-bottom: 3px;
 }
+
+/* Selected text banner styles */
+.selected-text-banner {
+    background: #e3f2fd;
+    border: 2px solid #2196f3;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.banner-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #1976d2;
+}
+
+.banner-close {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.banner-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.banner-text {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: #555;
+    margin-bottom: 6px;
+    line-height: 1.4;
+    background: white;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.banner-hint {
+    font-size: 0.75rem;
+    color: #666;
+    margin: 0;
+    text-align: center;
+}

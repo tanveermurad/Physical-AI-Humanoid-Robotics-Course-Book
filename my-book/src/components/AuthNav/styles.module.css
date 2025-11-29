@@ -1,0 +1,42 @@
+.authNav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.welcome {
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.link,
+.linkPrimary {
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.link {
+  color: var(--ifm-font-color-base);
+  background: transparent;
+}
+
+.link:hover {
+  background: var(--ifm-color-emphasis-200);
+  color: var(--ifm-font-color-base);
+}
+
+.linkPrimary {
+  background: var(--ifm-color-primary);
+  color: white;
+}
+
+.linkPrimary:hover {
+  background: var(--ifm-color-primary-dark);
+  color: white;
+  text-decoration: none;
+}

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import './styles.css'; // Import the CSS file for styling
 
 interface ChatMessage {
@@ -10,6 +11,9 @@ interface ChatMessage {
 interface ChatRequest {
   message: string;
   chat_history?: ChatMessage[];
+  selected_text?: string | null;
+  user_profile?: any;
+  user_id?: string | null;
 }
 
 interface ChatResponse {
@@ -19,11 +23,14 @@ interface ChatResponse {
 }
 
 const Chatbot: React.FC = () => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedText, setSelectedText] = useState('');
+  const [hasSelection, setHasSelection] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const API_BASE_URL = process.env.FRONTEND_API_BASE_URL || 'http://localhost:8000';
@@ -35,6 +42,20 @@ const Chatbot: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Capture text selection when chatbot opens
+  const handleChatbotOpen = () => {
+    setIsOpen(true);
+
+    // Capture any selected text when opening
+    const selection = window.getSelection();
+    const text = selection?.toString().trim();
+
+    if (text && text.length > 10) {
+      setSelectedText(text);
+      setHasSelection(true);
+    }
+  };
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() === '') return;
@@ -51,16 +72,30 @@ const Chatbot: React.FC = () => {
         content: msg.content
       }));
 
+      // Build user profile for personalization
+      const userProfile = user ? {
+        programmingExperience: user.programmingExperience,
+        rosExperience: user.rosExperience,
+        aiMlExperience: user.aiMlExperience,
+        roboticsExperience: user.roboticsExperience,
+        learningGoals: user.learningGoals,
+        preferredDifficulty: user.preferredDifficulty
+      } : null;
+
       const requestBody: ChatRequest = {
         message: inputMessage,
         chat_history: chatHistoryForRequest,
+        selected_text: hasSelection ? selectedText : null,
+        user_profile: userProfile,
+        user_id: user?.id || null,
       };
 
-      const response = await fetch(`${API_BASE_URL}/ask`, {
+      const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(requestBody),
       });
 
@@ -71,6 +106,12 @@ const Chatbot: React.FC = () => {
 
       const data: ChatResponse = await response.json();
       setMessages(data.chat_history);
+
+      // Clear selection after using it
+      if (hasSelection) {
+        setSelectedText('');
+        setHasSelection(false);
+      }
     } catch (err: any) {
       console.error('Error sending message:', err);
       setError(err.message || 'Failed to get response from the chatbot.');
@@ -91,7 +132,7 @@ const Chatbot: React.FC = () => {
 
   return (
     <div className={`chatbot-container ${isOpen ? 'open' : ''}`}>
-      <button className="chatbot-toggle-button" onClick={() => setIsOpen(!isOpen)}>
+      <button className="chatbot-toggle-button" onClick={handleChatbotOpen}>
         {isOpen ? 'Close Chat' : 'Open Chat'}
       </button>
       {isOpen && (
@@ -101,9 +142,34 @@ const Chatbot: React.FC = () => {
             <button className="chatbot-close-button" onClick={() => setIsOpen(false)}>×</button>
           </div>
           <div className="chatbot-messages">
+            {hasSelection && (
+              <div className="selected-text-banner">
+                <div className="banner-header">
+                  <span>📌 Selected Text</span>
+                  <button
+                    className="banner-close"
+                    onClick={() => {
+                      setSelectedText('');
+                      setHasSelection(false);
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="banner-text">
+                  {selectedText.substring(0, 150)}
+                  {selectedText.length > 150 && '...'}
+                </div>
+                <p className="banner-hint">
+                  Your question will be answered in the context of this selected text
+                </p>
+              </div>
+            )}
             {messages.length === 0 && !isLoading && !error && (
               <div className="chatbot-welcome-message">
-                Hi there! Ask me anything about the book.
+                {user
+                  ? `Hi ${user.name}! Ask me anything about the book.`
+                  : 'Hi there! Ask me anything about the book. Sign in for personalized responses.'}
               </div>
             )}
             {messages.map((msg, index) => (
