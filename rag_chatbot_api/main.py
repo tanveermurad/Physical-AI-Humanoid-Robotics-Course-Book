@@ -1,117 +1,120 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 import os
+import uvicorn
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio import AsyncSession
+from qdrant_client import QdrantClient
 from dotenv import load_dotenv
-import google.generativeai as genai
-from qdrant_client import QdrantClient, models
-from rag_chatbot_api.qdrant_client_config import get_qdrant_client, get_qdrant_collection_name
+import uuid
 
-# Load environment variables
+from models import ChatRequest, ChatResponse, IngestRequest, IngestResponse, ChatMessage
+from rag_core import get_conversational_rag_chain, embed_and_store_documents, format_chat_history_for_langchain
+from qdrant_client_config import get_qdrant_client
+from database import init_db, get_db, ChatHistory
+
 load_dotenv()
 
-app = FastAPI()
+app = FastAPI(
+    title="RAG Chatbot API",
+    description="API for a RAG chatbot powered by Qdrant, OpenAI/Gemini, and FastAPI.",
+    version="0.1.0",
+)
 
-# CORS configuration
-origins = [
-    "http://localhost:3000", # Docusaurus dev server
-    "http://localhost:3001", # Docusaurus dev server on alternative port
-]
-
+# --- CORS Configuration ---
+# Allow all origins for development. In production, restrict this.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"], # Adjust this to your frontend's origin in production, e.g., ["http://localhost:3000", "https://your-docusaurus-site.com"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Configure Google Generative AI
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-if not GOOGLE_API_KEY:
-    raise ValueError("GOOGLE_API_KEY environment variable not set.")
-genai.configure(api_key=GOOGLE_API_KEY)
+# --- Event Handlers ---
+@app.on_event("startup")
+async def on_startup():
+    print("Initializing database...")
+    await init_db()
+    print("Database initialized.")
 
-# Initialize Gemini generative model
-GENERATIVE_MODEL = genai.GenerativeModel("gemini-pro") # Using gemini-pro for text generation
-EMBEDDING_MODEL = "models/embedding-001" # Consistent with ingest_data.py
+# --- Dependencies ---
+def get_qdrant_client_dependency() -> QdrantClient:
+    return get_qdrant_client()
 
-class ChatRequest(BaseModel):
-    message: str
-    session_id: str = None
-    selected_text: str = None
+# --- Endpoints ---
 
-@app.get("/")
-async def read_root():
-    return {"message": "RAG Chatbot API is running!"}
-
-# Function to get embeddings using Gemini (duplicated from ingest_data.py for clarity/modularity)
-def get_embedding(text: str) -> list[float]:
-    response = genai.embed_content(
-        model=EMBEDDING_MODEL,
-        content=text,
-        task_type="RETRIEVAL_QUERY" # Task type for queries
-    )
-    return response['embedding']
-
-@app.post("/chat")
-async def chat_endpoint(request: ChatRequest):
-    user_query = request.message
-    qdrant_client = get_qdrant_client()
-    collection_name = get_qdrant_collection_name()
-
-    # 1. Generate embedding for the user query
-    query_embedding = get_embedding(user_query)
-
-    # 2. Query Qdrant for relevant document chunks
+@app.post("/embed", response_model=IngestResponse)
+async def embed_documents(
+    request: IngestRequest,
+    qdrant_client: QdrantClient = Depends(get_qdrant_client_dependency)
+):
+    """
+    Ingests a list of markdown files, chunks them, embeds them, and stores them in Qdrant.
+    This endpoint will recreate the Qdrant collection on each call.
+    """
+    if not request.file_paths:
+        raise HTTPException(status_code=400, detail="No file paths provided for ingestion.")
+    
     try:
-        search_result = qdrant_client.search(
-            collection_name=collection_name,
-            query_vector=query_embedding,
-            limit=3 # Retrieve top 3 relevant chunks
+        await embed_and_store_documents(request.file_paths)
+        return IngestResponse(status="success", details=f"Successfully ingested {len(request.file_paths)} files.")
+    except Exception as e:
+        print(f"Error during embedding: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to embed documents: {str(e)}")
+
+@app.post("/ask", response_model=ChatResponse)
+async def ask_question(
+    request: ChatRequest,
+    qdrant_client: QdrantClient = Depends(get_qdrant_client_dependency),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Answers a question using RAG, incorporating chat history for conversational context.
+    """
+    if not request.message:
+        raise HTTPException(status_code=400, detail="Message cannot be empty.")
+
+    try:
+        rag_chain = get_conversational_rag_chain(qdrant_client)
+
+        # Generate a session_id if not provided (for new conversations)
+        session_id = request.chat_history[0].role if request.chat_history else str(uuid.uuid4())
+
+        # Langchain expects history as a list of (HumanMessage, AIMessage) tuples or objects
+        formatted_chat_history = format_chat_history_for_langchain(request.chat_history or [])
+
+        result = await rag_chain.ainvoke({
+            "input": request.message,
+            "chat_history": formatted_chat_history
+        })
+        
+        assistant_response = result["answer"]
+        source_documents = [doc.page_content for doc in result.get("context", [])]
+
+        # Store chat history in the database
+        new_chat_entry = ChatHistory(
+            session_id=session_id,
+            user_message=request.message,
+            assistant_message=assistant_response
+        )
+        db.add(new_chat_entry)
+        await db.commit()
+        await db.refresh(new_chat_entry)
+
+        # Update chat history for the response
+        updated_chat_history = request.chat_history or []
+        updated_chat_history.append(ChatMessage(role="user", content=request.message))
+        updated_chat_history.append(ChatMessage(role="assistant", content=assistant_response))
+
+        return ChatResponse(
+            response=assistant_response,
+            source_documents=source_documents,
+            chat_history=updated_chat_history
         )
     except Exception as e:
-        print(f"Error searching Qdrant: {e}")
-        return {"response": "An error occurred while retrieving information. Please try again later."}
+        print(f"Error during RAG chain invocation: {e}")
+        raise HTTPException(status_code=500, detail=f"An error occurred while processing your request: {str(e)}")
 
-    context = []
-    if search_result:
-        for hit in search_result:
-            context.append(hit.payload['content'])
-    
-    context_str = "\n".join(context)
-
-    # 3. Construct a prompt for Gemini
-    prompt_parts = [
-        f"You are a helpful assistant that answers questions based on the provided book content. "
-        f"If the answer is not in the context, clearly state that you don't have enough information. "
-        f"Do not make up answers.\n\n"
-        f"Context from book:\n{context_str}\n\n"
-        f"Question: {user_query}\n\n"
-        f"Answer:"
-    ]
-
-    # Add selected text as additional context if provided
-    if request.selected_text:
-        prompt_parts[0] += f"\n\nAdditional context from selected text:\n{request.selected_text}\n"
-
-    # 4. Call the Gemini generative model
-    try:
-        response = GENERATIVE_MODEL.generate_content(prompt_parts)
-        response_message = response.text
-    except Exception as e:
-        print(f"Error generating content with Gemini: {e}")
-        response_message = "An error occurred while generating a response. Please try again later."
-
-    return {"response": response_message}
-
+# --- Run the application (for development) ---
 if __name__ == "__main__":
-    import uvicorn
-    # A quick check for Google API key
-    if not GOOGLE_API_KEY:
-        print("Please set your GOOGLE_API_KEY environment variable.")
-        print("You can get one from https://makersuite.google.com/k/api")
-        exit(1)
-        
     uvicorn.run(app, host="0.0.0.0", port=8000)
-

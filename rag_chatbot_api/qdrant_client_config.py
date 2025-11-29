@@ -1,41 +1,36 @@
 import os
-from qdrant_client import QdrantClient, models
+from qdrant_client import QdrantClient
+from qdrant_client.http.models import Distance, VectorParams
+from dotenv import load_dotenv
 
-# Retrieve Qdrant Cloud API Key and URL from environment variables
-QDRANT_HOST = os.getenv("QDRANT_HOST")
+load_dotenv()
+
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
-QDRANT_COLLECTION_NAME = os.getenv("QDRANT_COLLECTION_NAME", "book_content")
-
-if not QDRANT_HOST or not QDRANT_API_KEY:
-    print("WARNING: QDRANT_HOST and QDRANT_API_KEY environment variables must be set for Qdrant to function correctly.")
-    print("Please obtain your credentials from Qdrant Cloud (Free Tier) and set them.")
-
-qdrant_client = QdrantClient(
-    host=QDRANT_HOST,
-    api_key=QDRANT_API_KEY,
-)
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_COLLECTION_NAME = os.getenv("QDRANT_COLLECTION_NAME", "docusaurus_book_rag")
 
 def get_qdrant_client():
-    """Returns the initialized Qdrant client."""
-    return qdrant_client
+    if not QDRANT_URL or not QDRANT_API_KEY:
+        raise ValueError("QDRANT_URL and QDRANT_API_KEY must be set in environment variables.")
 
-def get_qdrant_collection_name():
-    """Returns the Qdrant collection name."""
-    return QDRANT_COLLECTION_NAME
+    client = QdrantClient(
+        url=QDRANT_URL,
+        api_key=QDRANT_API_KEY,
+    )
+    return client
 
-def create_collection_if_not_exists(client: QdrantClient, collection_name: str, vector_size: int = 1536):
+def recreate_qdrant_collection(client: QdrantClient, vector_size: int):
     """
-    Creates a Qdrant collection if it does not already exist.
-    Assumes a vector size of 1536, typical for OpenAI's `text-embedding-ada-002`.
+    Recreates the Qdrant collection, useful for fresh ingestion.
     """
     try:
-        if not client.collection_exists(collection_name=collection_name):
-            client.recreate_collection(
-                collection_name=collection_name,
-                vectors_config=models.VectorParams(size=vector_size, distance=models.Distance.COSINE),
-            )
-            print(f"Collection '{collection_name}' created.")
-        else:
-            print(f"Collection '{collection_name}' already exists.")
+        client.delete_collection(collection_name=QDRANT_COLLECTION_NAME)
+        print(f"Collection '{QDRANT_COLLECTION_NAME}' deleted.")
     except Exception as e:
-        print(f"Error managing collection '{collection_name}': {e}")
+        print(f"Collection '{QDRANT_COLLECTION_NAME}' did not exist or could not be deleted: {e}")
+
+    client.create_collection(
+        collection_name=QDRANT_COLLECTION_NAME,
+        vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
+    )
+    print(f"Collection '{QDRANT_COLLECTION_NAME}' created with vector size {vector_size}.")
