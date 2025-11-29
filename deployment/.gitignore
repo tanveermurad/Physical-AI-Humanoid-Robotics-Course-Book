@@ -1,0 +1,26 @@
+# Environment variables (contains secrets!)
+.env
+
+# Deployment info (contains production URLs)
+deployment_info.json
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
