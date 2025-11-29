@@ -6,15 +6,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
-QDRANT_URL = os.getenv("QDRANT_URL")
-QDRANT_COLLECTION_NAME = os.getenv("QDRANT_COLLECTION_NAME", "docusaurus_book_rag")
+QDRANT_HOST = os.getenv("QDRANT_HOST")
+QDRANT_COLLECTION_NAME = os.getenv("QDRANT_COLLECTION_NAME", "book_content")
 
 def get_qdrant_client():
-    if not QDRANT_URL or not QDRANT_API_KEY:
-        raise ValueError("QDRANT_URL and QDRANT_API_KEY must be set in environment variables.")
+    if not QDRANT_HOST or not QDRANT_API_KEY:
+        raise ValueError("QDRANT_HOST and QDRANT_API_KEY must be set in environment variables.")
 
     client = QdrantClient(
-        url=QDRANT_URL,
+        url=QDRANT_HOST,
         api_key=QDRANT_API_KEY,
     )
     return client

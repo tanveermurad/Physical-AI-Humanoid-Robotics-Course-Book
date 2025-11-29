@@ -13,10 +13,12 @@ GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
 QDRANT_HOST="YOUR_QDRANT_HOST"
 QDRANT_API_KEY="YOUR_QDRANT_API_KEY"
 QDRANT_COLLECTION_NAME="book_content" # Optional, defaults to "book_content"
+DATABASE_URL="postgresql+asyncpg://user:password@localhost/dbname" # Required for chat history storage
 ```
 
 *   **`GOOGLE_API_KEY`**: Obtain this from Google AI Studio ([https://makersuite.google.com/k/api](https://makersuite.google.com/k/api)).
 *   **`QDRANT_HOST`** and **`QDRANT_API_KEY`**: Obtain these from your Qdrant Cloud dashboard ([https://cloud.qdrant.io/](https://cloud.qdrant.io/)). You can use their free tier.
+*   **`DATABASE_URL`**: PostgreSQL database connection string for storing chat history. Format: `postgresql+asyncpg://username:password@host:port/database_name`. You can use a local PostgreSQL instance or a cloud service.
 
 ### 2. Install Dependencies
 

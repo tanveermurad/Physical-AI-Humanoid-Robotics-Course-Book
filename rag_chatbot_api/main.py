@@ -62,8 +62,8 @@ async def embed_documents(
         print(f"Error during embedding: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to embed documents: {str(e)}")
 
-@app.post("/ask", response_model=ChatResponse)
-async def ask_question(
+@app.post("/chat", response_model=ChatResponse)
+async def chat(
     request: ChatRequest,
     qdrant_client: QdrantClient = Depends(get_qdrant_client_dependency),
     db: AsyncSession = Depends(get_db)
@@ -78,7 +78,11 @@ async def ask_question(
         rag_chain = get_conversational_rag_chain(qdrant_client)
 
         # Generate a session_id if not provided (for new conversations)
-        session_id = request.chat_history[0].role if request.chat_history else str(uuid.uuid4())
+        # Use the session_id from the first message if available, otherwise create a new UUID
+        session_id = str(uuid.uuid4())
+        if request.chat_history and len(request.chat_history) > 0:
+            # Try to extract session_id from metadata if it exists, otherwise keep the UUID
+            session_id = getattr(request.chat_history[0], 'session_id', session_id)
 
         # Langchain expects history as a list of (HumanMessage, AIMessage) tuples or objects
         formatted_chat_history = format_chat_history_for_langchain(request.chat_history or [])

@@ -148,3 +148,32 @@
     background-color: #a0d4b0; /* Lighter green when disabled */
     cursor: not-allowed;
 }
+
+/* Styles for source documents */
+.source-documents-container {
+    margin-top: 5px;
+    font-size: 0.85em;
+    color: #555;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin-left: 10px; /* Indent slightly */
+    border: 1px solid #e0e0e0;
+}
+
+.source-documents-container summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: #333;
+}
+
+.source-documents-list {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+.source-documents-list li {
+    margin-bottom: 3px;
+}

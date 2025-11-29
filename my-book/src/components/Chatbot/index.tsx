@@ -4,6 +4,7 @@ import './styles.css'; // Import the CSS file for styling
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  source_documents?: string[];
 }
 
 interface ChatRequest {
@@ -25,7 +26,7 @@ const Chatbot: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const API_BASE_URL = 'http://localhost:8000'; // Replace with your FastAPI backend URL in production
+  const API_BASE_URL = process.env.FRONTEND_API_BASE_URL || 'http://localhost:8000';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -108,6 +109,18 @@ const Chatbot: React.FC = () => {
             {messages.map((msg, index) => (
               <div key={index} className={`message ${msg.role}`}>
                 <div className="message-content">{msg.content}</div>
+                {msg.role === 'assistant' && (msg as any).source_documents && (msg as any).source_documents.length > 0 && (
+                  <div className="source-documents-container">
+                    <details>
+                      <summary>Source Documents</summary>
+                      <ul className="source-documents-list">
+                        {(msg as any).source_documents.map((doc: string, docIndex: number) => (
+                          <li key={docIndex}>{doc}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  </div>
+                )}
               </div>
             ))}
             {isLoading && (
