@@ -11,6 +11,7 @@ tiktoken
 psycopg2-binary
 sqlalchemy
 asyncpg
+aiosqlite
 markdown
 beautifulsoup4
 unstructured
