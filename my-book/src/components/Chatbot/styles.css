@@ -5,18 +5,19 @@
   right: 20px;
   width: 350px;
   max-height: 500px;
-  background-color: #fff;
-  border: 1px solid #ccc;
+  background-color: var(--ifm-card-background-color);
+  border: 1px solid var(--ifm-color-emphasis-300);
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
+  color: var(--ifm-font-color-base);
 }
 
 .chatbot-header {
-  background-color: #f1f1f1;
+  background-color: var(--ifm-color-emphasis-200);
   padding: 10px;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid var(--ifm-color-emphasis-300);
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
 }
@@ -40,33 +41,36 @@
 }
 
 .chatbot-message.user {
-  background-color: #dcf8c6;
+  background-color: var(--ifm-color-primary);
+  color: var(--ifm-color-primary-contrast-foreground);
   align-self: flex-end;
   margin-left: auto;
 }
 
 .chatbot-message.bot {
-  background-color: #f1f1f1;
+  background-color: var(--ifm-color-emphasis-200);
   align-self: flex-start;
 }
 
 .chatbot-input {
   display: flex;
   padding: 10px;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid var(--ifm-color-emphasis-300);
 }
 
 .chatbot-input input {
   flex-grow: 1;
-  border: 1px solid #ccc;
+  background-color: var(--ifm-background-color);
+  color: var(--ifm-font-color-base);
+  border: 1px solid var(--ifm-color-emphasis-300);
   border-radius: 20px;
   padding: 8px 12px;
   font-size: 1em;
 }
 
 .chatbot-input button {
-  background-color: #4caf50;
-  color: white;
+  background-color: var(--ifm-color-primary);
+  color: var(--ifm-color-primary-contrast-foreground);
   border: none;
   border-radius: 20px;
   padding: 8px 15px;
@@ -75,5 +79,5 @@
 }
 
 .chatbot-input button:hover {
-  background-color: #45a049;
+  background-color: var(--ifm-color-primary-dark);
 }
