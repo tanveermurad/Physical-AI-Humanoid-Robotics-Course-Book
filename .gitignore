@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.venv
+rag_chatbot_api/.venv
+rag_chatbot_api/__pycache__
+rag_chatbot_api/.env
+
+# Node
+my-book/node_modules/
+my-book/build/
+
+# Docusaurus
+my-book/.docusaurus/
+
+# Temporary files
+temp_gh_pages/
+.DS_Store
