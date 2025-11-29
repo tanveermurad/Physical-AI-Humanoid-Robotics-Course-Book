@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkmy_book=globalThis.webpackChunkmy_book||[]).push([[57],{9015:(t,n,o)=>{o.r(n),o.d(n,{default:()=>s});o(6540);var i=o(1656),e=o(7798),h=o(4848);const s=function(){return(0,h.jsx)(i.A,{title:"Chatbot",description:"Chat with the book content using AI.",children:(0,h.jsx)("main",{children:(0,h.jsx)(e.A,{})})})}}}]);
