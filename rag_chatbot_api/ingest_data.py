@@ -1,22 +1,22 @@
 import os
 import glob
 from dotenv import load_dotenv
-import openai
+import google.generativeai as genai
 from qdrant_client import QdrantClient, models
-import tiktoken
 import re
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize OpenAI client
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY environment variable not set.")
+# Initialize Google Generative AI client
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+if not GOOGLE_API_KEY:
+    raise ValueError("GOOGLE_API_KEY environment variable not set.")
 
-openai_client = openai.Client(api_key=OPENAI_API_KEY)
-EMBEDDING_MODEL = "text-embedding-ada-002"
-EMBEDDING_DIMENSION = 1536 # Dimension for text-embedding-ada-002
+genai.configure(api_key=GOOGLE_API_KEY)
+# Using "models/embedding-001" as it is commonly available and has a dimension of 768
+EMBEDDING_MODEL = "models/embedding-001"
+EMBEDDING_DIMENSION = 768 
 
 # Initialize Qdrant client
 QDRANT_HOST = os.getenv("QDRANT_HOST")
@@ -45,32 +45,35 @@ def create_collection_if_not_exists(client: QdrantClient, collection_name: str, 
     except Exception as e:
         print(f"Error managing collection '{collection_name}': {e}")
 
-# Function to get embeddings
+# Function to get embeddings using Gemini
 def get_embedding(text: str) -> list[float]:
-    response = openai_client.embeddings.create(
-        input=text,
-        model=EMBEDDING_MODEL
+    response = genai.embed_content(
+        model=EMBEDDING_MODEL,
+        content=text,
+        task_type="RETRIEVAL_DOCUMENT"
     )
-    return response.data[0].embedding
+    return response['embedding']
 
-# Function to chunk text using tiktoken
-def num_tokens_from_string(string: str, encoding_name: str) -> int:
-    encoding = tiktoken.get_encoding(encoding_name)
-    num_tokens = len(encoding.encode(string))
-    return num_tokens
-
-def chunk_text(text: str, max_tokens: int = 500, overlap_tokens: int = 50) -> list[str]:
-    tokenizer = tiktoken.encoding_for_model(EMBEDDING_MODEL)
-    tokens = tokenizer.encode(text)
-    
+# Function to chunk text (character-based)
+def chunk_text(text: str, max_chars: int = 1000, overlap_chars: int = 100) -> list[str]:
     chunks = []
-    i = 0
-    while i < len(tokens):
-        chunk = tokens[i:i + max_tokens]
-        chunks.append(tokenizer.decode(chunk))
-        if i + max_tokens >= len(tokens):
-            break
-        i += max_tokens - overlap_tokens
+    current_position = 0
+    while current_position < len(text):
+        end_position = min(current_position + max_chars, len(text))
+        chunk = text[current_position:end_position]
+        
+        # Try to break at a sentence boundary if possible
+        if end_position < len(text):
+            # Look for last period, question mark, or exclamation mark
+            sentence_ends = [chunk.rfind('.'), chunk.rfind('?'), chunk.rfind('!')]
+            max_sentence_end = max(sentence_ends)
+            if max_sentence_end > -1 and len(chunk) - max_sentence_end < (max_chars / 4): # If sentence end is not too far back
+                chunk = chunk[:max_sentence_end + 1]
+
+        chunks.append(chunk)
+        current_position += len(chunk) - overlap_chars
+        if current_position < 0: # Ensure current_position doesn't go negative
+            current_position = 0
     return chunks
 
 # Function to extract title from markdown content
@@ -168,10 +171,10 @@ if __name__ == "__main__":
     # os.chdir(os.path.dirname(os.path.abspath(__file__)))
     # For this setup, we assume the script is run from the project root or adjust docs_path accordingly
     
-    # A quick check for OpenAI API key
-    if not OPENAI_API_KEY:
-        print("Please set your OPENAI_API_KEY environment variable.")
-        print("You can get one from https://platform.openai.com/account/api-keys")
+    # A quick check for Google API key
+    if not GOOGLE_API_KEY:
+        print("Please set your GOOGLE_API_KEY environment variable.")
+        print("You can get one from https://makersuite.google.com/k/api")
         exit(1)
         
     # A quick check for Qdrant credentials
