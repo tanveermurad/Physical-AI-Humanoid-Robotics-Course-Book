@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
@@ -10,6 +11,20 @@ from rag_chatbot_api.qdrant_client_config import get_qdrant_client, get_qdrant_c
 load_dotenv()
 
 app = FastAPI()
+
+# CORS configuration
+origins = [
+    "http://localhost:3000", # Docusaurus dev server
+    "http://localhost:3001", # Docusaurus dev server on alternative port
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Configure Google Generative AI
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
