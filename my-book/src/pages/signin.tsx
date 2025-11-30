@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import Layout from '@theme/Layout';
-import { useAuth } from '../contexts/AuthContext';
-import { useHistory } from '@docusaurus/router';
-import styles from './auth.module.css';
+import BrowserOnly from '@docusaurus/BrowserOnly';
 
-export default function SigninPage() {
+function SigninContent() {
+  const { useAuth } = require('../contexts/AuthContext');
+  const { useHistory } = require('@docusaurus/router');
+  const styles = require('./auth.module.css');
+
   const { signIn } = useAuth();
   const history = useHistory();
   const [email, setEmail] = useState('');
@@ -28,46 +30,53 @@ export default function SigninPage() {
   };
 
   return (
-    <Layout title="Sign In" description="Sign in to your account">
-      <div className={styles.authContainer}>
-        <div className={styles.authCard}>
-          <h1>Sign In</h1>
-          <form onSubmit={handleSubmit}>
-            <div className={styles.formGroup}>
-              <label>Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label>Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+    <div className={styles.authContainer}>
+      <div className={styles.authCard}>
+        <h1>Sign In</h1>
+        <form onSubmit={handleSubmit} className={styles.authForm}>
+          <div className={styles.formGroup}>
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-            {error && <div className={styles.error}>{error}</div>}
+          <div className={styles.formGroup}>
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
-            <button
-              type="submit"
-              className={styles.primaryButton}
-              disabled={loading}
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
-            </button>
-          </form>
+          {error && <div className={styles.error}>{error}</div>}
 
-          <p className={styles.authLink}>
-            Don't have an account? <a href="/signup">Sign up</a>
-          </p>
-        </div>
+          <button type="submit" disabled={loading} className={styles.submitButton}>
+            {loading ? 'Signing in...' : 'Sign In'}
+          </button>
+        </form>
+
+        <p className={styles.authFooter}>
+          Don't have an account? <a href="/signup">Sign up</a>
+        </p>
       </div>
+    </div>
+  );
+}
+
+export default function SigninPage() {
+  return (
+    <Layout title="Sign In" description="Sign in to your account">
+      <BrowserOnly fallback={<div>Loading...</div>}>
+        {() => <SigninContent />}
+      </BrowserOnly>
     </Layout>
   );
 }
