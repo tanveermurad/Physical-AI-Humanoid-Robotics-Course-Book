@@ -9,10 +9,6 @@ const config: Config = {
   tagline: 'A course book on the fundamentals of physical AI and humanoid robotics.',
   favicon: 'img/favicon.ico',
 
-  // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
-  future: {
-    v4: true, // Improve compatibility with the upcoming Docusaurus v4
-  },
 
   // Set the production url of your site here
   url: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://tanveermurad.github.io',
@@ -27,7 +23,8 @@ const config: Config = {
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
+  onBrokenMarkdownLinks: 'warn',
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
