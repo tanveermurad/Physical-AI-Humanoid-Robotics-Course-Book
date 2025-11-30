@@ -33,7 +33,9 @@ const Chatbot: React.FC = () => {
   const [hasSelection, setHasSelection] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const API_BASE_URL = process.env.FRONTEND_API_BASE_URL || 'http://localhost:8000';
+  const API_BASE_URL = typeof window !== 'undefined'
+    ? (process.env.FRONTEND_API_BASE_URL || 'http://localhost:8000')
+    : 'http://localhost:8000';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
