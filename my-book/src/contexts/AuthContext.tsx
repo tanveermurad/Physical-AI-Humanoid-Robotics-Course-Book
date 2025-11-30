@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authClient } from '../lib/auth-client';
 import { UserProfile } from '../types/user';
 
 interface AuthContextType {
@@ -19,6 +18,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchUser = async () => {
+    // Only fetch in browser environment
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:3001/api/user/profile', {
         credentials: 'include',
