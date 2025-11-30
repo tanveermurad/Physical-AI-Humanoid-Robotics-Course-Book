@@ -15,10 +15,10 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://tanveermurad.github.io',
+  url: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://tanveermurad.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/Physical-AI-Humanoid-Robotics-Course-Book/',
+  // For Vercel deployment, use '/' | For GitHub pages deployment, use '/<projectName>/'
+  baseUrl: process.env.VERCEL ? '/' : '/Physical-AI-Humanoid-Robotics-Course-Book/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.

@@ -1,0 +1,15 @@
+{
+  "buildCommand": "cd my-book && npm install && npm run build",
+  "outputDirectory": "my-book/build",
+  "installCommand": "npm install --prefix my-book",
+  "framework": null,
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
