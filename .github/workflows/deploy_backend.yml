@@ -3,8 +3,8 @@ name: Deploy FastAPI Backend
 on:
   push:
     branches:
-      - main # Trigger on pushes to the main branch
-  workflow_dispatch: # Allows manual triggering from GitHub UI
+      - main
+  workflow_dispatch:
 
 env:
   DOCKER_IMAGE_NAME: rag-chatbot-api
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write # Needed to push to GitHub Container Registry
+      packages: write
 
     steps:
       - name: Checkout repository
@@ -31,39 +31,44 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./rag_chatbot_api # Path to your Dockerfile and application code
+          context: ./rag_chatbot_api
+          file: ./rag_chatbot_api/Dockerfile
           push: true
-          tags: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest
-          # Cache management (optional, but good for faster builds)
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+            ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Display pushed image tag
-        run: echo "Image pushed: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest"
+        run: |
+          echo "Image pushed:"
+          echo "${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest"
+          echo "${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}"
 
-      # --- Placeholder for actual deployment to a cloud provider ---
-      # This step will vary significantly based on your chosen cloud provider (AWS, GCP, Azure, Render, Railway, etc.)
-      # You would typically add steps here to:
-      # 1. Connect to your cloud provider (e.g., using provider-specific GitHub Actions)
-      # 2. Update your service (e.g., ECS service, Cloud Run service, Kubernetes deployment)
-      #    to use the newly pushed Docker image.
-      #
-      # Example for a hypothetical Cloud Run deployment (requires gcloud CLI and authentication):
-      # - name: Deploy to Google Cloud Run (Example)
-      #   if: success() # Only run if previous steps succeeded
-      #   uses: google-github-actions/setup-gcloud@v1
-      #   with:
-      #     project_id: ${{ secrets.GCP_PROJECT_ID }}
-      #     service_account_key: ${{ secrets.GCP_SA_KEY }}
-      #
-      # - name: Deploy Docker image to Cloud Run (Example)
-      #   run: |
-      #     gcloud run deploy ${{ env.DOCKER_IMAGE_NAME }} \
-      #       --image ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest \
-      #       --region your-gcp-region \
-      #       --platform managed \
-      #       --allow-unauthenticated # or --set-env-vars KEY=VALUE
-      #       # Pass environment variables needed by your FastAPI app
-      #       --set-env-vars QDRANT_URL=${{ secrets.QDRANT_URL }},QDRANT_API_KEY=${{ secrets.QDRANT_API_KEY }},DATABASE_URL=${{ secrets.DATABASE_URL }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-      #
-      # For other providers, you would use their respective deployment tools/actions.
+  # -------------------------------
+  # OPTIONAL: Add your deployment job here
+  # -------------------------------
+  # Example: Deploy to a VPS via SSH
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Deploy to VPS (example)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            docker pull ghcr.io/${{ github.repository_owner }}/rag-chatbot-api:latest
+            docker stop rag-chatbot-api || true
+            docker rm rag-chatbot-api || true
+            docker run -d --name rag-chatbot-api -p 8000:8000 \
+              -e QDRANT_URL=${{ secrets.QDRANT_URL }} \
+              -e QDRANT_API_KEY=${{ secrets.QDRANT_API_KEY }} \
+              -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
+              -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+              ghcr.
