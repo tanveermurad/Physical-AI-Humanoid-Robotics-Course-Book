@@ -1,6 +1,6 @@
 import React from 'react';
 import Layout from '@theme/Layout';
-import Chatbot from '../components/Chatbot';
+import BrowserOnly from '@docusaurus/BrowserOnly';
 
 function ChatbotPage() {
   return (
@@ -9,7 +9,12 @@ function ChatbotPage() {
       description="Chat with the book content using AI."
     >
       <main>
-        <Chatbot />
+        <BrowserOnly fallback={<div>Loading chatbot...</div>}>
+          {() => {
+            const Chatbot = require('../components/Chatbot').default;
+            return <Chatbot />;
+          }}
+        </BrowserOnly>
       </main>
     </Layout>
   );
